@@ -41,8 +41,12 @@ Add to your Claude Code `settings.json` (`~/.claude/settings.json`):
 | `get_rankings` | Share of voice and competitive positioning — 30-day window |
 | `get_sources` | Citation and URL analysis across AI models — 30-day window |
 | `get_scores` | AI knowledge scores by model and date — 365-day window |
+| `list_prompts` | List all tracked prompts for a project |
+| `create_prompt` | Create a new tracked prompt |
+| `update_prompt` | Update models, frequency, audience, or active status |
+| `delete_prompt` | Soft-delete a tracked prompt |
 
-All tools except `get_scores` accept an optional `prompt_id` to drill down to a specific prompt rather than project-level aggregates.
+The tracking tools (`get_overview`, `get_rankings`, `get_sources`) accept an optional `prompt_id` to drill down to a specific prompt rather than project-level aggregates.
 
 ## Example usage
 
