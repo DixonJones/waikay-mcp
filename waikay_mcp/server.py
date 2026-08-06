@@ -17,10 +17,13 @@ def _key() -> str:
 
 
 async def _request(method: str, path: str, params: dict, body: dict | None = None) -> dict:
-    params["key"] = _key()
+    key = _key()
+    params["key"] = key
+    # Use header-based auth for write operations (recommended by Waikay for POST/PATCH/DELETE)
+    headers = {"X-API-Key": key} if method != "GET" else {}
     async with httpx.AsyncClient() as client:
         resp = await client.request(
-            method, f"{BASE_URL}{path}", params=params, json=body, timeout=30
+            method, f"{BASE_URL}{path}", params=params, json=body, headers=headers, timeout=30
         )
         resp.raise_for_status()
         return resp.json()
@@ -91,18 +94,18 @@ async def get_scores(project_id: int) -> dict:
 @mcp.tool()
 async def list_prompts(
     project_id: int,
-    include_inactive: bool = False,
+    include_inactive: bool = True,
     include_deleted: bool = False,
 ) -> dict:
     """
     List all tracked prompts for a project, including their models, frequency, and active status.
-    Use include_inactive or include_deleted to widen the results.
+    include_inactive defaults to True (matches API default). Set include_deleted to see deleted prompts.
     """
-    params: dict = {"project": project_id}
-    if include_inactive:
-        params["include_inactive"] = "true"
-    if include_deleted:
-        params["include_deleted"] = "true"
+    params: dict = {
+        "project": project_id,
+        "include_inactive": 1 if include_inactive else 0,
+        "include_deleted": 1 if include_deleted else 0,
+    }
     return await _request("GET", "/api/prompts", params)
 
 
@@ -110,20 +113,26 @@ async def list_prompts(
 async def create_prompt(
     project_id: int,
     prompt_string: str,
-    models: list[str],
-    frequency: str,
-    audience: str | None = None,
+    models: list[int],
+    frequency: int,
+    audience: int = 0,
 ) -> dict:
     """
     Create a new tracked prompt for a project.
-    - models: list of AI models to track, e.g. ["chatgpt", "claude", "gemini", "sonar"]
-    - frequency: how often to run, e.g. "daily" or "weekly"
-    - audience: optional target audience description
-    Returns the new prompt_id, or a 402 error if the account has insufficient credits.
+    - models: list of model IDs to track. Options:
+        1=Sonar, 3=ChatGPT, 5=Claude, 100=Gemini,
+        101=AI Mode (scraped), 102=ChatGPT (scraped), 103=Gemini (scraped), 104=Copilot (scraped)
+    - frequency: 1=daily, 2=twice weekly, 7=weekly
+    - audience: audience identifier integer (default 0)
+    - prompt_string: max 500 characters; cannot be changed after creation
+    Returns the new prompt_id, or 402 if the account has insufficient credits.
     """
-    body: dict = {"prompt_string": prompt_string, "models": models, "frequency": frequency}
-    if audience is not None:
-        body["audience"] = audience
+    body: dict = {
+        "prompt_string": prompt_string,
+        "models": models,
+        "frequency": frequency,
+        "audience": audience,
+    }
     return await _request("POST", "/api/prompts", {"project": project_id}, body)
 
 
@@ -131,14 +140,16 @@ async def create_prompt(
 async def update_prompt(
     project_id: int,
     prompt_id: int,
-    models: list[str] | None = None,
-    frequency: str | None = None,
-    audience: str | None = None,
-    active: bool | None = None,
+    models: list[int] | None = None,
+    frequency: int | None = None,
+    audience: int | None = None,
+    active: int | None = None,
 ) -> dict:
     """
-    Update an existing prompt. The prompt_string itself cannot be changed.
+    Update an existing prompt. The prompt_string cannot be changed after creation.
     Only supply the fields you want to update.
+    - frequency: 1=daily, 2=twice weekly, 7=weekly
+    - active: 1=running, 0=paused, 2=deleted
     """
     body: dict = {}
     if models is not None:
