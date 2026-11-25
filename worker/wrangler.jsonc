@@ -1,0 +1,9 @@
+{
+  "name": "waikay-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "routes": [{ "pattern": "mcp.waikay.io", "custom_domain": true }],
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "2eee18432a224a62b3ea87f59a6ce818" }],
+  "observability": { "enabled": true }
+}
