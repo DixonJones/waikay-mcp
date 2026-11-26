@@ -129,6 +129,9 @@ export default new OAuthProvider<Env>({
   clientRegistrationEndpoint: "/oauth/register",
   scopesSupported: SCOPES,
   requiredScopes: ["mcp:read"],
+  // Stored (encrypted) API key lifetime: deleted after 90 days without use, and at most 1 year after sign-in.
+  refreshTokenIdleTTL: 90 * 24 * 60 * 60,
+  refreshTokenTTL: 365 * 24 * 60 * 60,
   resourceMetadata: {
     resource: "https://mcp.waikay.io/mcp",
     authorization_servers: ["https://mcp.waikay.io"],
