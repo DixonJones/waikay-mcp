@@ -18,25 +18,72 @@ Built by [Dixon Jones](https://github.com/DixonJones).
 
 ---
 
-## Requirements
+## Two ways to use it
 
-- Python 3.10+
-- A Waikay account on **Level 2 or above** ($69.95/month)
-- Your Waikay API key (from [account settings](https://app.waikay.io))
+| | Hosted | Local |
+|---|---|---|
+| Install anything | No | Yes (Python) |
+| Works in | Claude, ChatGPT and any client that supports remote MCP servers | Claude Desktop, Claude Code and other local MCP clients |
+| Your API key | Pasted once on a sign-in page | Stored in your own config file |
+
+Both need a Waikay account on **Level 2 or above** ($69.95/month) and your Waikay API key (from [account settings](https://app.waikay.io)). Both offer the same nine tools, described below.
 
 ---
 
-## Installation
+## Hosted version
+
+The hosted server runs at:
+
+```
+https://mcp.waikay.io/mcp
+```
+
+### Connecting
+
+1. In your AI assistant, add a custom connector (remote MCP server) and enter the URL above. In Claude this is under Customize, then Connectors, then Add custom connector.
+2. When the Waikay page opens, paste your Waikay API key and click **Allow**. The key is checked against the Waikay API before the connection is made.
+3. Ask for something, for example *"List my Waikay projects"*.
+
+There is nothing to install and no config file to edit.
+
+### How your key is handled
+
+- Your key is stored encrypted and is only used to call the Waikay API on your behalf.
+- Stored keys are deleted automatically after 90 days without use, and one year after you connect at most. After that the assistant asks you to reconnect and you paste the key again.
+- The service keeps no request logs.
+- To disconnect, remove the connector in your assistant. To make a stored key useless straight away, regenerate it in your Waikay dashboard.
+- Questions or deletion requests: contact@waikay.io.
+
+### How it works
+
+The hosted server is a Cloudflare Worker, in [`worker/`](worker/). It uses OAuth 2.1 with PKCE and dynamic client registration, so each user connects with their own key and never shares one. It speaks stateless streamable HTTP and calls the same Waikay API as the local version. To run it locally for development:
+
+```bash
+cd worker
+npm install
+npx wrangler dev --local
+```
+
+This needs Node 22.12 or newer. Deploying needs a Cloudflare account and a KV namespace bound as `OAUTH_KV` in `worker/wrangler.jsonc`.
+
+---
+
+## Local version
+
+### Requirements
+
+- Python 3.10+
+- Your Waikay API key
+
+### Installation
 
 ```bash
 pip install waikay-mcp
 ```
 
----
+### Configuration
 
-## Configuration
-
-### Claude Desktop app
+#### Claude Desktop app
 
 Add to `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Application Support/Claude/claude_desktop_config.json` (Mac):
 
@@ -54,7 +101,7 @@ Add to `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/App
 }
 ```
 
-### Claude Code (CLI)
+#### Claude Code (CLI)
 
 Add to `~/.claude/settings.json`:
 
